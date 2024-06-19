@@ -1,12 +1,32 @@
 {
-  "name": "curso-nodejs",
+  "name": "@sara-rioseco/find-available-port",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "devDependencies": {
+    "eslint": "^9.5.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "jest": "^29.7.0"
+  },
   "author": "Sara Rioseco <sara.rioseco@gmail.com>",
-  "license": "ISC",
-  "description": ""
+  "license": "MIT",
+  "description": "Find Available Port is a very simple library that allows you to check if a provided port is available on your machine and, alternatively, if the provided port is not available, find a different one that is.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sara-rioseco/find-available-port"
+  },
+  "keywords": [
+    "port",
+    "available",
+    "find port"
+  ],
+  "bugs": {
+    "url": "https://github.com/sara-rioseco/find-available-port/issues"
+  }
 }
