@@ -1,7 +1,7 @@
 import { createServer } from 'node:net';
 
 export const app = {
-  findAvailablePort(desiredPort) {
+  find(desiredPort) {
     return new Promise((res, rej) => {
       const server = createServer();
 
@@ -13,8 +13,8 @@ export const app = {
       });
 
       server.on('error', err => {
-        if (err.code === 'EADDRINUSE') {
-          this.findAvailablePort(0).then(port => {
+        if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+          this.find(0).then(port => {
             server.close(() => {
               res(port);
             });
@@ -26,7 +26,7 @@ export const app = {
     });
   },
   
-  async isPortAvailable(port) {
-    return port == await this.findAvailablePort(port)
+  async isAvailable(port) {
+    return port == await this.find(port)
   }
 }
