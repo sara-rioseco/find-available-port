@@ -1,0 +1,26 @@
+{
+  "env": {
+    "node": true,
+    "browser": true,
+    "es6": true,
+    "jest/globals": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 8,
+    "sourceType": "module",
+    "allowImportExportEverywhere": true
+  },
+  "rules": {
+    "max-len": ["error", { "code": 80 }],
+    "linebreak-style": 0,
+    "prefer-destructuring": 0,
+    "no-param-reassign": ["error", { "props": false }],
+    "import/extensions": 0,
+    "import/prefer-default-export": 0,
+    "jest/no-disabled-tests": "warn",
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "error",
+    "jest/prefer-to-have-length": "warn",
+    "jest/valid-expect": "error"
+  }
+}
