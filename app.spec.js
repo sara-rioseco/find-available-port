@@ -1,26 +1,34 @@
 import { createServer } from 'node:net';
 import { app } from './app';
 
-// Mock createServer
 jest.mock('node:net', () => ({
   createServer: jest.fn(),
 }));
 
 describe('app', () => {
-  let listenMock, closeMock, onMock;
+  let server, listenMock, closeMock, onMock;
 
   beforeEach(() => {
-    listenMock = jest.fn((port, callback) =>  callback());
+    listenMock = jest.fn((port, callback) => {
+      setImmediate(callback);
+    });
     closeMock = jest.fn((callback) => callback());
-    onMock = jest.fn((error, callback) =>  callback());
+    onMock = jest.fn();
     addressMock = jest.fn(() => ({ port: 3000 }));
 
-    createServer.mockImplementation(() => ({
+    server = {
       listen: listenMock,
       close: closeMock,
       on: onMock,
       address: addressMock,
-    }));
+      emit: jest.fn((event, error) => {
+        if (event === 'error') {
+          onMock.mock.calls.find(call => call[0] === 'error')[1](error);
+        }
+      })
+    };
+
+    createServer.mockReturnValue(server);
   });
 
   afterEach(() => {
@@ -33,7 +41,10 @@ describe('app', () => {
 
       const port = await app.find(desiredPort);
 
-      expect(listenMock).toHaveBeenCalledWith(desiredPort, expect.any(Function));
+      expect(listenMock).toHaveBeenCalledWith(
+        desiredPort,
+        expect.any(Function)
+      );
       expect(closeMock).toHaveBeenCalled();
       expect(port).toBe(desiredPort);
     });
@@ -52,8 +63,11 @@ describe('app', () => {
 
       const port = await app.find(desiredPort);
 
-      expect(listenMock).toHaveBeenCalledWith(desiredPort, expect.any(Function));
-      expect(listenMock).toHaveBeenCalledWith(0, expect.any(Function)); // Retries with port 0
+      expect(listenMock).toHaveBeenCalledWith(
+        desiredPort,
+        expect.any(Function)
+      );
+      expect(listenMock).toHaveBeenCalledWith(0, expect.any(Function));
       expect(closeMock).toHaveBeenCalled();
       expect(port).toBe(fallbackPort);
     });
@@ -61,9 +75,50 @@ describe('app', () => {
       const desiredPort = 3000;
       const error = new Error('Unknown error');
 
-      listenMock.mockImplementationOnce(() => { 
-        throw error
-      })
+      listenMock.mockImplementationOnce(() => {
+        throw error;
+      });
+
+      await expect(app.find(desiredPort)).rejects.toThrow(error);
+
+      expect(listenMock).toHaveBeenCalledWith(
+        desiredPort,
+        expect.any(Function)
+      );
+      expect(closeMock).not.toHaveBeenCalled();
+    });
+    it('should return a fallback port if EADDRINUSE error occurs', async () => {
+      const desiredPort = 3000;
+      const fallbackPort = 4000;
+    
+      addressMock.mockReturnValueOnce({ port: fallbackPort });
+    
+      onMock.mockImplementationOnce((event, handler) => {
+        if (event === 'error') {
+          handler({ code: 'EADDRINUSE' });
+        }
+      });
+    
+      const port = await app.find(desiredPort);
+    
+      expect(listenMock).toHaveBeenCalledWith(desiredPort, expect.any(Function));
+      expect(listenMock).toHaveBeenCalledWith(0, expect.any(Function));
+      expect(closeMock).toHaveBeenCalled();
+      expect(port).toBe(fallbackPort);
+    });
+    it('should reject the promise if an unknown error occurs (else branch)', async () => { 
+      const desiredPort = 3000;
+      const error = new Error('Other error');
+      error.code = 'OTHER_ERROR';
+
+      onMock.mockImplementationOnce((event, handler) => {
+        if (event === 'error') {
+          handler(error);
+        }
+      });
+
+      server.listen = listenMock;
+      server.on = onMock;
 
       await expect(app.find(desiredPort)).rejects.toThrow(error);
 
@@ -71,6 +126,8 @@ describe('app', () => {
       expect(closeMock).not.toHaveBeenCalled();
     });
   });
+
+
 
   describe('isAvailable', () => {
     it('should return true if the port is available', async () => {

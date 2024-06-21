@@ -5,11 +5,13 @@
     "es6": true,
     "jest/globals": true
   },
+  "extends": ["plugin:jest/recommended"],
   "parserOptions": {
     "ecmaVersion": 8,
     "sourceType": "module",
     "allowImportExportEverywhere": true
   },
+  "plugins": ["jest"],
   "rules": {
     "max-len": ["error", { "code": 80 }],
     "linebreak-style": 0,
